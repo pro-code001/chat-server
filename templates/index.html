@@ -4,33 +4,103 @@
   <meta charset="UTF-8" />
   <title>Simple Chat</title>
   <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <style>
-    #chat { display: none; border: 1px solid black; padding: 10px; margin-top: 10px; }
-    #messages { height: 200px; overflow-y: scroll; border: 1px solid #ccc; padding: 5px; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #c9d6ff, #e2e2e2);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #login, #chat {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      width: 300px;
+    }
+
+    input {
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    button {
+      width: 48%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      color: white;
+      background-color: #4A90E2;
+      cursor: pointer;
+      margin: 5px 1%;
+    }
+
+    button:hover {
+      background-color: #357ABD;
+    }
+
+    #chat {
+      display: none;
+    }
+
+    #messages {
+      height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      background: #f7f7f7;
+    }
+
+    #messageInput {
+      width: calc(100% - 60px);
+    }
+
+    #sendBtn {
+      width: 50px;
+      background-color: #28a745;
+    }
+
+    #sendBtn:hover {
+      background-color: #218838;
+    }
   </style>
 </head>
 <body>
-  <h2>Welcome to Chat</h2>
-
   <div id="login">
-    <input id="username" placeholder="Your name" /><br />
-    <input id="room" placeholder="Room name" /><br />
-    <input id="password" type="password" placeholder="Password" /><br />
-
-    <button id="createBtn">Create Room</button>
-    <button id="joinBtn">Join Room</button>
+    <h2 style="text-align:center;">Welcome to Chat</h2>
+    <input id="username" placeholder="Your name" />
+    <input id="room" placeholder="Room name" />
+    <input id="password" type="password" placeholder="Password" />
+    <div style="display: flex; justify-content: space-between;">
+      <button id="createBtn">Create</button>
+      <button id="joinBtn">Join</button>
+    </div>
   </div>
 
   <div id="chat">
     <h3>Room: <span id="roomName"></span></h3>
     <div id="messages"></div>
-    <input id="messageInput" placeholder="Type message..." />
-    <button id="sendBtn">Send</button>
+    <div style="display: flex;">
+      <input id="messageInput" placeholder="Type message..." />
+      <button id="sendBtn">➤</button>
+    </div>
   </div>
 
   <script>
     const socket = io();
-
     const loginDiv = document.getElementById('login');
     const chatDiv = document.getElementById('chat');
     const roomNameSpan = document.getElementById('roomName');
