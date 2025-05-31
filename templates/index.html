@@ -2,294 +2,206 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stylish Chat with Auth and Rooms</title>
-  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Two-Person Chat App</title>
   <style>
-    * { box-sizing: border-box; }
     body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0; padding: 0;
-      min-height: 100vh;
-      display: flex; justify-content: center; align-items: center;
-      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23d5ab, #23a6d5);
-      background-size: 400% 400%;
-      animation: gradientBG 15s ease infinite;
-      color: #222;
-    }
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
     }
     .container {
-      background: rgba(255,255,255,0.95);
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-      width: 90%; max-width: 450px;
-      text-align: center;
+      max-width: 500px;
+      margin: 30px auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-top: 0;
     }
     input {
+      display: block;
       width: 100%;
       margin: 10px 0;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
+      padding: 10px;
       font-size: 16px;
-    }
-    .btn-group {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 10px;
-      gap: 10px;
-      flex-wrap: wrap;
     }
     button {
-      flex: 1 1 45%;
-      padding: 12px;
+      padding: 10px;
+      width: 100%;
       font-size: 16px;
-      border: none;
-      border-radius: 10px;
+      margin-top: 10px;
       cursor: pointer;
-      color: white;
-      background-color: #222;
-      position: relative;
-      z-index: 0;
-      overflow: hidden;
-      transition: background-color 0.3s ease;
     }
-    button:hover {
-      background-color: #000;
-    }
-    button::before {
-      content: "";
-      position: absolute;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background: linear-gradient(45deg, #ff0040, #00ffe0, #1900ff, #ff00c8);
-      background-size: 400% 400%;
-      animation: glowing 20s linear infinite;
-      z-index: -1;
-      filter: blur(6px);
-    }
-    @keyframes glowing {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    #auth, #roomForm, #chat {
+    #chat {
       display: none;
     }
-    #auth.active, #roomForm.active, #chat.active {
-      display: block;
-    }
     #messages {
-      height: 250px;
+      height: 300px;
+      border: 1px solid #ccc;
+      padding: 10px;
       overflow-y: auto;
-      border: 1px solid #ccc;
-      padding: 10px;
+      background-color: #fafafa;
       margin-bottom: 10px;
-      border-radius: 10px;
-      background: #f7f7f7;
-      text-align: left;
     }
-    #messageInput {
-      width: calc(100% - 60px);
-      font-size: 15px;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-    }
-    #sendBtn {
-      width: 50px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 18px;
-      margin-left: 5px;
-    }
-    #sendBtn:hover {
-      background-color: #1f7d34;
-    }
-    @media (max-width: 480px) {
-      input, button, #messageInput, #sendBtn {
-        font-size: 15px;
-      }
-      #messages {
-        height: 200px;
-      }
+    p {
+      margin: 5px 0;
     }
   </style>
 </head>
 <body>
-  <!-- AUTH (SIGNUP / LOGIN) -->
-  <div id="auth" class="container active">
-    <h2>Welcome! Please Sign Up or Log In</h2>
-    <input id="authUsername" placeholder="Username" />
-    <input id="authPassword" type="password" placeholder="Password" />
-    <div class="btn-group">
-      <button id="signupBtn">Sign Up</button>
-      <button id="loginBtn">Log In</button>
-    </div>
-  </div>
 
-  <!-- ROOM FORM (CREATE / JOIN ROOM) -->
-  <div id="roomForm" class="container">
-    <h2>Create or Join a Room</h2>
-    <input id="roomNameInput" placeholder="Room name" />
-    <input id="roomPasswordInput" type="password" placeholder="Room password" />
-    <div class="btn-group">
-      <button id="createRoomBtn">Create Room</button>
-      <button id="joinRoomBtn">Join Room</button>
-    </div>
-  </div>
+<div class="container" id="auth">
+  <h2>Login or Sign Up</h2>
+  <input type="text" id="authUsername" placeholder="Username" />
+  <input type="password" id="authPassword" placeholder="Password" />
+  <button id="signupBtn">Sign Up</button>
+  <button id="loginBtn">Log In</button>
+</div>
 
-  <!-- CHAT -->
-  <div id="chat" class="container">
-    <h3>Room: <span id="roomDisplayName"></span></h3>
-    <div id="messages"></div>
-    <div style="display: flex;">
-      <input id="messageInput" placeholder="Type message..." />
-      <button id="sendBtn">➤</button>
-    </div>
-  </div>
+<div class="container" id="roomForm" style="display: none;">
+  <h2>Create or Join a Room</h2>
+  <input type="text" id="roomNameInput" placeholder="Room Name" />
+  <input type="password" id="roomPasswordInput" placeholder="Room Password" />
+  <button id="createRoomBtn">Create Room</button>
+  <button id="joinRoomBtn">Join Room</button>
+</div>
 
-  <script>
-    const socket = io();
+<div class="container" id="chat">
+  <h2>Room: <span id="roomDisplayName"></span></h2>
+  <div id="messages"></div>
+  <input type="text" id="messageInput" placeholder="Type your message..." />
+  <button id="sendBtn">Send</button>
+</div>
 
-    // DOM elements
-    const authDiv = document.getElementById('auth');
-    const roomFormDiv = document.getElementById('roomForm');
-    const chatDiv = document.getElementById('chat');
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
 
-    const authUsernameInput = document.getElementById('authUsername');
-    const authPasswordInput = document.getElementById('authPassword');
-    const signupBtn = document.getElementById('signupBtn');
-    const loginBtn = document.getElementById('loginBtn');
+  const authDiv = document.getElementById('auth');
+  const roomFormDiv = document.getElementById('roomForm');
+  const chatDiv = document.getElementById('chat');
 
-    const roomNameInput = document.getElementById('roomNameInput');
-    const roomPasswordInput = document.getElementById('roomPasswordInput');
-    const createRoomBtn = document.getElementById('createRoomBtn');
-    const joinRoomBtn = document.getElementById('joinRoomBtn');
+  const authUsernameInput = document.getElementById('authUsername');
+  const authPasswordInput = document.getElementById('authPassword');
+  const signupBtn = document.getElementById('signupBtn');
+  const loginBtn = document.getElementById('loginBtn');
 
-    const roomDisplayName = document.getElementById('roomDisplayName');
-    const messagesDiv = document.getElementById('messages');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
+  const roomNameInput = document.getElementById('roomNameInput');
+  const roomPasswordInput = document.getElementById('roomPasswordInput');
+  const createRoomBtn = document.getElementById('createRoomBtn');
+  const joinRoomBtn = document.getElementById('joinRoomBtn');
 
-    let currentUsername = null;
-    let currentRoom = null;
+  const roomDisplayName = document.getElementById('roomDisplayName');
+  const messagesDiv = document.getElementById('messages');
+  const messageInput = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
 
-    // Sign Up
-    signupBtn.onclick = () => {
-      const username = authUsernameInput.value.trim();
-      const password = authPasswordInput.value.trim();
-      if (!username || !password) {
-        alert("Fill both username and password to sign up.");
-        return;
-      }
-      socket.emit('signup', {username, password});
-    };
+  let currentUsername = null;
+  let currentRoom = null;
 
-    // Log In
-    loginBtn.onclick = () => {
-      const username = authUsernameInput.value.trim();
-      const password = authPasswordInput.value.trim();
-      if (!username || !password) {
-        alert("Fill both username and password to log in.");
-        return;
-      }
-      socket.emit('login', {username, password});
-    };
-
-    // On signup response
-    socket.on('signup_response', data => {
-      alert(data.msg);
-      if (data.success) {
-        currentUsername = authUsernameInput.value.trim();
-        authDiv.classList.remove('active');
-        roomFormDiv.classList.add('active');
-      }
-    });
-
-    // On login response
-    socket.on('login_response', data => {
-      alert(data.msg);
-      if (data.success) {
-        currentUsername = authUsernameInput.value.trim();
-        authDiv.classList.remove('active');
-        roomFormDiv.classList.add('active');
-      }
-    });
-
-    // Create Room
-    createRoomBtn.onclick = () => {
-      const room = roomNameInput.value.trim();
-      const password = roomPasswordInput.value.trim();
-      if (!room || !password) {
-        alert("Fill both room name and password to create a room.");
-        return;
-      }
-      socket.emit('create', {username: currentUsername, room, password});
-    };
-
-    // Join Room
-    joinRoomBtn.onclick = () => {
-      const room = roomNameInput.value.trim();
-      const password = roomPasswordInput.value.trim();
-      if (!room || !password) {
-        alert("Fill both room name and password to join a room.");
-        return;
-      }
-      socket.emit('join', {username: currentUsername, room, password});
-    };
-
-    // Listen to server's 'created' event (room created)
-    socket.on('created', data => {
-      alert("Room created and joined: " + data.room);
-      enterChatRoom(data.room);
-    });
-
-    // Listen to server's 'joined' event (room joined)
-    socket.on('joined', data => {
-      alert("Joined room: " + data.room);
-      enterChatRoom(data.room);
-    });
-
-    // Listen to error events (if any)
-    socket.on('error', data => {
-      alert(data.msg);
-    });
-
-    // Enter chat room UI update
-    function enterChatRoom(room) {
-      currentRoom = room;
-      roomFormDiv.classList.remove('active');
-      chatDiv.classList.add('active');
-      roomDisplayName.textContent = room;
-      messagesDiv.innerHTML = '';
+  signupBtn.onclick = () => {
+    const username = authUsernameInput.value.trim();
+    const password = authPasswordInput.value.trim();
+    if (!username || !password) {
+      alert("Enter username and password to sign up.");
+      return;
     }
+    socket.emit('signup', { username, password });
+  };
 
-    // Sending messages
-    sendBtn.onclick = () => {
-      const msg = messageInput.value.trim();
-      if (!msg) return;
-      socket.emit('message', {username: currentUsername, room: currentRoom, msg});
-      messageInput.value = '';
-    };
+  loginBtn.onclick = () => {
+    const username = authUsernameInput.value.trim();
+    const password = authPasswordInput.value.trim();
+    if (!username || !password) {
+      alert("Enter username and password to log in.");
+      return;
+    }
+    socket.emit('login', { username, password });
+  };
 
-    // Receiving messages
-    socket.on('message', data => {
-      if (data.room === currentRoom) {
-        const p = document.createElement('p');
-        p.textContent = `${data.username}: ${data.msg}`;
-        messagesDiv.appendChild(p);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      }
+  socket.on('signup_response', data => {
+    alert(data.msg);
+    if (data.success) {
+      currentUsername = authUsernameInput.value.trim();
+      authDiv.style.display = 'none';
+      roomFormDiv.style.display = 'block';
+    }
+  });
+
+  socket.on('login_response', data => {
+    alert(data.msg);
+    if (data.success) {
+      currentUsername = authUsernameInput.value.trim();
+      authDiv.style.display = 'none';
+      roomFormDiv.style.display = 'block';
+    }
+  });
+
+  createRoomBtn.onclick = () => {
+    const room = roomNameInput.value.trim();
+    const password = roomPasswordInput.value.trim();
+    if (!room || !password) {
+      alert("Enter room name and password.");
+      return;
+    }
+    socket.emit('create', { username: currentUsername, room, password });
+  };
+
+  joinRoomBtn.onclick = () => {
+    const room = roomNameInput.value.trim();
+    const password = roomPasswordInput.value.trim();
+    if (!room || !password) {
+      alert("Enter room name and password.");
+      return;
+    }
+    socket.emit('join', { username: currentUsername, room, password });
+  };
+
+  socket.on('created', data => {
+    enterChatRoom(data.room);
+    alert("Room created and joined: " + data.room);
+  });
+
+  socket.on('joined', data => {
+    enterChatRoom(data.room);
+    alert("Joined room: " + data.room);
+  });
+
+  socket.on('error', data => {
+    alert(data.msg);
+  });
+
+  function enterChatRoom(room) {
+    currentRoom = room;
+    roomFormDiv.style.display = 'none';
+    chatDiv.style.display = 'block';
+    roomDisplayName.textContent = room;
+    messagesDiv.innerHTML = '';
+  }
+
+  sendBtn.onclick = () => {
+    const msg = messageInput.value.trim();
+    if (!msg) return;
+    socket.emit('message', {
+      username: currentUsername,
+      room: currentRoom,
+      msg
     });
-  </script>
+    messageInput.value = '';
+  };
+
+  socket.on('message', data => {
+    if (data.room === currentRoom) {
+      const p = document.createElement('p');
+      p.textContent = `${data.username}: ${data.msg}`;
+      messagesDiv.appendChild(p);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  });
+</script>
 </body>
 </html>
