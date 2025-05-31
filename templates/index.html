@@ -240,20 +240,21 @@
       socket.emit('join', {username: currentUsername, room, password});
     };
 
-    // On create response
-    socket.on('create_response', data => {
-      alert(data.msg);
-      if (data.success) {
-        enterChatRoom(data.room);
-      }
+    // Listen to server's 'created' event (room created)
+    socket.on('created', data => {
+      alert("Room created and joined: " + data.room);
+      enterChatRoom(data.room);
     });
 
-    // On join response
-    socket.on('join_response', data => {
+    // Listen to server's 'joined' event (room joined)
+    socket.on('joined', data => {
+      alert("Joined room: " + data.room);
+      enterChatRoom(data.room);
+    });
+
+    // Listen to error events (if any)
+    socket.on('error', data => {
       alert(data.msg);
-      if (data.success) {
-        enterChatRoom(data.room);
-      }
     });
 
     // Enter chat room UI update
