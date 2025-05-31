@@ -3,19 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat App</title>
+  <title>Stylish Chat</title>
   <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: linear-gradient(-45deg, #ff0040, #00ffe0, #1900ff, #ff00c8);
       background-size: 600% 600%;
       animation: animateBG 20s ease infinite;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
+      z-index: -1;
+      filter: blur(20px);
     }
 
     @keyframes animateBG {
@@ -24,28 +41,74 @@
       100% { background-position: 0% 50%; }
     }
 
-    .container {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
+    #login, #chat {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
       width: 90%;
       max-width: 450px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      text-align: center;
     }
 
-    input, button {
+    h2, h3 {
+      margin-bottom: 15px;
+    }
+
+    input {
       width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 8px;
+      margin: 10px 0;
+      padding: 12px;
+      border-radius: 10px;
       border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    .btn-group {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     button {
-      background: black;
-      color: white;
+      flex: 1 1 45%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
       cursor: pointer;
-      font-weight: bold;
+      color: white;
+      background-color: #222;
+      position: relative;
+      z-index: 0;
+      overflow: hidden;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #000;
+    }
+
+    button::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, #ff0040, #00ffe0, #1900ff, #ff00c8);
+      background-size: 400% 400%;
+      animation: glowing 20s linear infinite;
+      z-index: -1;
+      filter: blur(6px);
+    }
+
+    @keyframes glowing {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
     #chat {
@@ -53,111 +116,134 @@
     }
 
     #messages {
-      height: 200px;
+      height: 250px;
       overflow-y: auto;
-      background: #f7f7f7;
+      border: 1px solid #ccc;
       padding: 10px;
-      border-radius: 8px;
       margin-bottom: 10px;
+      border-radius: 10px;
+      background: #f7f7f7;
+      text-align: left;
     }
 
-    .msg {
-      margin-bottom: 8px;
+    #messageInput {
+      width: calc(100% - 60px);
+      font-size: 15px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    #sendBtn {
+      width: 50px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      margin-left: 5px;
+    }
+
+    #sendBtn:hover {
+      background-color: #1f7d34;
     }
 
     @media (max-width: 480px) {
-      .container {
-        padding: 15px;
+      input, button, #messageInput, #sendBtn {
+        font-size: 15px;
+      }
+
+      #messages {
+        height: 200px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div id="login">
-      <h3>Join Chat</h3>
-      <input id="username" placeholder="Your name" />
-      <input id="room" placeholder="Room name" />
-      <input id="password" type="password" placeholder="Password" />
-      <button onclick="create()">Create</button>
-      <button onclick="join()">Join</button>
-    </div>
+  <div class="background"></div>
 
-    <div id="chat">
-      <h4>Room: <span id="roomName"></span></h4>
-      <div id="messages"></div>
-      <input id="messageInput" placeholder="Message..." />
-      <button onclick="sendMessage()">Send</button>
+  <div id="login">
+    <h2>Welcome to Chat</h2>
+    <input id="username" placeholder="Your name" />
+    <input id="room" placeholder="Room name" />
+    <input id="password" type="password" placeholder="Password" />
+    <div class="btn-group">
+      <button id="createBtn">Create</button>
+      <button id="joinBtn">Join</button>
+    </div>
+  </div>
+
+  <div id="chat">
+    <h3>Room: <span id="roomName"></span></h3>
+    <div id="messages"></div>
+    <div style="display: flex;">
+      <input id="messageInput" placeholder="Type message..." />
+      <button id="sendBtn">➤</button>
     </div>
   </div>
 
   <script>
     const socket = io();
+    const loginDiv = document.getElementById('login');
+    const chatDiv = document.getElementById('chat');
+    const roomNameSpan = document.getElementById('roomName');
     const messagesDiv = document.getElementById('messages');
 
-    function create() {
-      const username = getVal('username');
-      const room = getVal('room');
-      const password = getVal('password');
-      if (username && room && password) {
-        socket.emit('create', { username, room, password });
-      } else {
-        alert('Fill all fields.');
+    document.getElementById('createBtn').onclick = () => {
+      const username = document.getElementById('username').value.trim();
+      const room = document.getElementById('room').value.trim();
+      const password = document.getElementById('password').value.trim();
+      if (!username || !room || !password) {
+        alert("Fill all fields to create a room.");
+        return;
       }
-    }
+      socket.emit('create', {username, room, password});
+    };
 
-    function join() {
-      const username = getVal('username');
-      const room = getVal('room');
-      const password = getVal('password');
-      if (username && room && password) {
-        socket.emit('join', { username, room, password });
-      } else {
-        alert('Fill all fields.');
+    document.getElementById('joinBtn').onclick = () => {
+      const username = document.getElementById('username').value.trim();
+      const room = document.getElementById('room').value.trim();
+      const password = document.getElementById('password').value.trim();
+      if (!username || !room || !password) {
+        alert("Fill all fields to join a room.");
+        return;
       }
-    }
-
-    function sendMessage() {
-      const msg = document.getElementById('messageInput').value.trim();
-      const room = document.getElementById('roomName').textContent;
-      if (msg) {
-        socket.emit('message', { room, msg });
-        document.getElementById('messageInput').value = '';
-      }
-    }
-
-    function getVal(id) {
-      return document.getElementById(id).value.trim();
-    }
+      socket.emit('join', {username, room, password});
+    };
 
     socket.on('created', data => {
-      showChat(data.room);
-      addMessage(`You created room ${data.room}`);
+      loginDiv.style.display = 'none';
+      chatDiv.style.display = 'block';
+      roomNameSpan.textContent = data.room;
+      addMessage(`You created and joined room: ${data.room}`);
     });
 
     socket.on('joined', data => {
-      showChat(data.room);
-      addMessage(`You joined room ${data.room}`);
-    });
-
-    socket.on('message', msg => {
-      addMessage(msg);  // faqat xabar matni
+      loginDiv.style.display = 'none';
+      chatDiv.style.display = 'block';
+      roomNameSpan.textContent = data.room;
+      addMessage(`You joined room: ${data.room}`);
     });
 
     socket.on('error', data => {
       alert(data.msg);
     });
 
-    function showChat(room) {
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('chat').style.display = 'block';
-      document.getElementById('roomName').textContent = room;
-    }
+    socket.on('message', msg => {
+      addMessage(msg);
+    });
 
-    function addMessage(text) {
-      const p = document.createElement('div');
-      p.className = 'msg';
-      p.textContent = text;
+    document.getElementById('sendBtn').onclick = () => {
+      const msg = document.getElementById('messageInput').value.trim();
+      const room = roomNameSpan.textContent;
+      if (!msg) return;
+      socket.emit('message', {room, msg});
+      document.getElementById('messageInput').value = '';
+    };
+
+    function addMessage(msg) {
+      const p = document.createElement('p');
+      p.textContent = msg;
       messagesDiv.appendChild(p);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
