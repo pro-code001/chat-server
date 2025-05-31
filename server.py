@@ -33,4 +33,5 @@ def handle_message(data):
     send(data['msg'], room=data['room'])
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
+
