@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Chat</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f0f0f0;
+            text-align: center;
+            padding: 50px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            max-width: 400px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome to Chat</h2>
+        <button onclick="showCreate()">Create Chat</button>
+        <button onclick="showJoin()">Join Chat</button>
+
+        <div id="formArea" style="display:none;">
+            <input type="text" id="chatName" placeholder="Chat Name">
+            <input type="password" id="chatPassword" placeholder="Password">
+            <button onclick="submitForm()">Enter</button>
+        </div>
+    </div>
+
+    <script>
+        let action = '';
+
+        function showCreate() {
+            action = 'create';
+            document.getElementById('formArea').style.display = 'block';
+        }
+
+        function showJoin() {
+            action = 'join';
+            document.getElementById('formArea').style.display = 'block';
+        }
+
+        function submitForm() {
+            const name = document.getElementById('chatName').value;
+            const pass = document.getElementById('chatPassword').value;
+
+            // Bu yerda serverga so'rov yuboriladi (keyin Python kodda bajariladi)
+            alert(`${action.toUpperCase()} chat: ${name}, pass: ${pass}`);
+        }
+    </script>
+</body>
+</html>
