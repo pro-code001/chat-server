@@ -5,13 +5,13 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret123'
 socketio = SocketIO(app)
 
-# Chat xonalar uchun vaqtinchalik saqlash
 chat_rooms = {}
 
 @app.route('/')
 def index():
-    return "Server ishlayapti! Frontend alohida bo'ladi."
+    return render_template('index.html')  # Bu yerda index.html sahifasini yuboradi
 
+# Quyidagi SocketIO eventlar sizniki bo‘lishi kerak
 @socketio.on('join')
 def handle_join(data):
     room = data['room']
@@ -34,4 +34,3 @@ def handle_message(data):
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
-
