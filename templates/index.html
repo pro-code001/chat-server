@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>2-Person Chat</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    #chat {
+      display: none;
+    }
+    #messages {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f9f9f9;
+    }
+    p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" id="roomForm">
+  <h2>Create or Join Room</h2>
+  <input type="text" id="roomNameInput" placeholder="Room Name" />
+  <input type="password" id="roomPasswordInput" placeholder="Room Password" />
+  <button id="createRoomBtn">Create Room</button>
+  <button id="joinRoomBtn">Join Room</button>
+</div>
+
+<div class="container" id="chat">
+  <h2>Room: <span id="roomDisplayName"></span></h2>
+  <div id="messages"></div>
+  <input type="text" id="messageInput" placeholder="Type a message..." />
+  <button id="sendBtn">Send</button>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  const roomForm = document.getElementById("roomForm");
+  const chatDiv = document.getElementById("chat");
+  const roomDisplayName = document.getElementById("roomDisplayName");
+  const messagesDiv = document.getElementById("messages");
+  const messageInput = document.getElementById("messageInput");
+
+  const roomNameInput = document.getElementById("roomNameInput");
+  const roomPasswordInput = document.getElementById("roomPasswordInput");
+
+  let currentRoom = "";
+
+  document.getElementById("createRoomBtn").onclick = () => {
+    const room = roomNameInput.value.trim();
+    const password = roomPasswordInput.value.trim();
+    if (!room || !password) {
+      alert("Enter room name and password");
+      return;
+    }
+    socket.emit("create", { room, password });
+  };
+
+  document.getElementById("joinRoomBtn").onclick = () => {
+    const room = roomNameInput.value.trim();
+    const password = roomPasswordInput.value.trim();
+    if (!room || !password) {
+      alert("Enter room name and password");
+      return;
+    }
+    socket.emit("join", { room, password });
+  };
+
+  socket.on("created", data => {
+    enterRoom(data.room);
+    alert("Room created successfully!");
+  });
+
+  socket.on("joined", data => {
+    enterRoom(data.room);
+    alert("Joined room!");
+  });
+
+  socket.on("error", data => {
+    alert(data.msg);
+  });
+
+  function enterRoom(room) {
+    currentRoom = room;
+    roomForm.style.display = "none";
+    chatDiv.style.display = "block";
+    roomDisplayName.textContent = room;
+    messagesDiv.innerHTML = "";
+  }
+
+  document.getElementById("sendBtn").onclick = () => {
+    const msg = messageInput.value.trim();
+    if (!msg) return;
+    socket.emit("message", { room: currentRoom, msg });
+    messageInput.value = "";
+  };
+
+  socket.on("message", data => {
+    if (data.room === currentRoom) {
+      const p = document.createElement("p");
+      p.textContent = data.msg;
+      messagesDiv.appendChild(p);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  });
+</script>
+
+</body>
+</html>
