@@ -2,93 +2,97 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat</title>
-  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <title>Simple Chat</title>
+  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+  <style>
+    #chat { display: none; border: 1px solid black; padding: 10px; margin-top: 10px; }
+    #messages { height: 200px; overflow-y: scroll; border: 1px solid #ccc; padding: 5px; }
+  </style>
 </head>
 <body>
-  <h2>Welcome to the Chat</h2>
-  <input id="username" placeholder="Your Name" />
-  <input id="room" placeholder="Room Name" />
-  <input id="password" placeholder="Password" type="password" />
+  <h2>Welcome to Chat</h2>
 
-  <button onclick="createRoom()">Create Room</button>
-  <button onclick="joinRoom()">Join Room</button>
+  <div id="login">
+    <input id="username" placeholder="Your name" /><br />
+    <input id="room" placeholder="Room name" /><br />
+    <input id="password" type="password" placeholder="Password" /><br />
 
-  <div id="chat" style="display:none;">
-    <div id="messages" style="border:1px solid #ccc; height:300px; overflow:auto;"></div>
-    <input id="messageInput" placeholder="Write a message..." />
-    <button onclick="sendMessage()">Send</button>
+    <button id="createBtn">Create Room</button>
+    <button id="joinBtn">Join Room</button>
+  </div>
+
+  <div id="chat">
+    <h3>Room: <span id="roomName"></span></h3>
+    <div id="messages"></div>
+    <input id="messageInput" placeholder="Type message..." />
+    <button id="sendBtn">Send</button>
   </div>
 
   <script>
     const socket = io();
 
-    function createRoom() {
+    const loginDiv = document.getElementById('login');
+    const chatDiv = document.getElementById('chat');
+    const roomNameSpan = document.getElementById('roomName');
+    const messagesDiv = document.getElementById('messages');
+
+    document.getElementById('createBtn').onclick = () => {
       const username = document.getElementById('username').value.trim();
       const room = document.getElementById('room').value.trim();
       const password = document.getElementById('password').value.trim();
-      if(!username || !room || !password) {
-        alert("Please fill in all fields to create a room!");
+      if (!username || !room || !password) {
+        alert("Fill all fields to create a room.");
         return;
       }
-      socket.emit('create', { username, room, password });
-    }
+      socket.emit('create', {username, room, password});
+    };
 
-    function joinRoom() {
+    document.getElementById('joinBtn').onclick = () => {
       const username = document.getElementById('username').value.trim();
       const room = document.getElementById('room').value.trim();
       const password = document.getElementById('password').value.trim();
-      if(!username || !room || !password) {
-        alert("Please fill in all fields to join a room!");
+      if (!username || !room || !password) {
+        alert("Fill all fields to join a room.");
         return;
       }
-      socket.emit('join', { username, room, password });
-    }
+      socket.emit('join', {username, room, password});
+    };
 
-    socket.on('connect', () => {
-      console.log("Connected to server");
+    socket.on('created', data => {
+      loginDiv.style.display = 'none';
+      chatDiv.style.display = 'block';
+      roomNameSpan.textContent = data.room;
+      addMessage(`You created and joined room: ${data.room}`);
     });
 
-    socket.on('error', (data) => {
+    socket.on('joined', data => {
+      loginDiv.style.display = 'none';
+      chatDiv.style.display = 'block';
+      roomNameSpan.textContent = data.room;
+      addMessage(`You joined room: ${data.room}`);
+    });
+
+    socket.on('error', data => {
       alert(data.msg);
     });
 
-    socket.on('message', (msg) => {
-      const messagesDiv = document.getElementById('messages');
+    socket.on('message', msg => {
+      addMessage(msg);
+    });
+
+    document.getElementById('sendBtn').onclick = () => {
+      const msg = document.getElementById('messageInput').value.trim();
+      const room = roomNameSpan.textContent;
+      if (!msg) return;
+      socket.emit('message', {room, msg});
+      document.getElementById('messageInput').value = '';
+    };
+
+    function addMessage(msg) {
       const p = document.createElement('p');
       p.textContent = msg;
       messagesDiv.appendChild(p);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-
-    socket.on('join', (msg) => {
-      const messagesDiv = document.getElementById('messages');
-      const p = document.createElement('p');
-      p.textContent = msg;
-      messagesDiv.appendChild(p);
-      document.getElementById('chat').style.display = 'block';
-    });
-
-    socket.on('create', (msg) => {
-      const messagesDiv = document.getElementById('messages');
-      const p = document.createElement('p');
-      p.textContent = msg;
-      messagesDiv.appendChild(p);
-      document.getElementById('chat').style.display = 'block';
-    });
-
-    socket.on('connect_error', () => {
-      alert("Connection error");
-    });
-
-    function sendMessage() {
-      const msgInput = document.getElementById('messageInput');
-      const room = document.getElementById('room').value.trim();
-      const msg = msgInput.value.trim();
-      if(msg) {
-        socket.emit('message', { room, msg });
-        msgInput.value = '';
-      }
     }
   </script>
 </body>
