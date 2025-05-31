@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stylish Chat</title>
   <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
@@ -14,8 +15,7 @@
       font-family: 'Poppins', sans-serif;
       margin: 0;
       padding: 0;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -42,11 +42,12 @@
     }
 
     #login, #chat {
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       padding: 25px;
       border-radius: 15px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-      width: 320px;
+      width: 90%;
+      max-width: 450px;
       text-align: center;
     }
 
@@ -60,19 +61,21 @@
       padding: 12px;
       border-radius: 10px;
       border: 1px solid #ccc;
-      font-size: 14px;
+      font-size: 16px;
     }
 
     .btn-group {
       display: flex;
       justify-content: space-between;
       margin-top: 10px;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     button {
-      width: 48%;
+      flex: 1 1 45%;
       padding: 12px;
-      font-size: 14px;
+      font-size: 16px;
       border: none;
       border-radius: 10px;
       cursor: pointer;
@@ -113,7 +116,7 @@
     }
 
     #messages {
-      height: 200px;
+      height: 250px;
       overflow-y: auto;
       border: 1px solid #ccc;
       padding: 10px;
@@ -125,15 +128,34 @@
 
     #messageInput {
       width: calc(100% - 60px);
+      font-size: 15px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
     }
 
     #sendBtn {
       width: 50px;
       background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      margin-left: 5px;
     }
 
     #sendBtn:hover {
       background-color: #1f7d34;
+    }
+
+    @media (max-width: 480px) {
+      input, button, #messageInput, #sendBtn {
+        font-size: 15px;
+      }
+
+      #messages {
+        height: 200px;
+      }
     }
   </style>
 </head>
@@ -228,3 +250,4 @@
   </script>
 </body>
 </html>
+
