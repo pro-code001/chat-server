@@ -1,15 +1,15 @@
 from flask import Flask, render_template, request
-from flask_socketio import SocketIO, join_room, leave_room, send
+from flask_socketio import SocketIO, join_room, send
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret123'
 socketio = SocketIO(app)
 
-chat_rooms = {}  # Xonalar va parollari saqlanadi
+chat_rooms = {}  # {room_name: password}
 
 @app.route('/')
 def index():
-    return render_template('index.html')  # templates/index.html ni render qiladi
+    return render_template('index.html')
 
 @socketio.on('create')
 def handle_create(data):
@@ -36,7 +36,7 @@ def handle_join(data):
     elif chat_rooms[room] == password:
         join_room(room)
         send(f"{username} joined the room {room}", room=room)
-        socketio.emit('join', {'room': room}, room=request.sid)
+        socketio.emit('joined', {'room': room}, room=request.sid)
     else:
         socketio.emit('error', {'msg': 'Incorrect password!'}, room=request.sid)
 
