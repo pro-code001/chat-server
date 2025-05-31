@@ -20,6 +20,7 @@
       justify-content: center;
       align-items: center;
       position: relative;
+      background: #000;
     }
 
     .background {
@@ -124,6 +125,8 @@
       border-radius: 10px;
       background: #f7f7f7;
       text-align: left;
+      font-weight: 600;
+      font-size: 15px;
     }
 
     #messageInput {
@@ -142,6 +145,7 @@
       border-radius: 10px;
       font-size: 18px;
       margin-left: 5px;
+      cursor: pointer;
     }
 
     #sendBtn:hover {
@@ -215,22 +219,23 @@
       loginDiv.style.display = 'none';
       chatDiv.style.display = 'block';
       roomNameSpan.textContent = data.room;
-      addMessage(`You created and joined room: ${data.room}`);
+      addMessage({username: 'System', time: new Date(), msg: `You created and joined room: ${data.room}`});
     });
 
     socket.on('joined', data => {
       loginDiv.style.display = 'none';
       chatDiv.style.display = 'block';
       roomNameSpan.textContent = data.room;
-      addMessage(`You joined room: ${data.room}`);
+      addMessage({username: 'System', time: new Date(), msg: `You joined room: ${data.room}`});
     });
 
     socket.on('error', data => {
       alert(data.msg);
     });
 
-    socket.on('message', msg => {
-      addMessage(msg);
+    socket.on('message', data => {
+      // data: {username, time, msg}
+      addMessage(data);
     });
 
     document.getElementById('sendBtn').onclick = () => {
@@ -241,13 +246,13 @@
       document.getElementById('messageInput').value = '';
     };
 
-    function addMessage(msg) {
+    function addMessage(data) {
       const p = document.createElement('p');
-      p.textContent = msg;
+      const time = new Date(data.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      p.textContent = `${data.username} [${time}]`;
       messagesDiv.appendChild(p);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
   </script>
 </body>
 </html>
-
