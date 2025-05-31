@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #messages { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 10px; margin-bottom: 10px; }
+    input { margin-right: 5px; }
+    #chat { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Chatga xush kelibsiz</h2>
+
+  <input id="username" placeholder="Ismingiz" />
+  <input id="room" placeholder="Xona nomi" />
+  <input id="password" placeholder="Parol" type="password" />
+  <button onclick="joinRoom()">Xonaga qo‘shilish</button>
+
+  <div id="chat" style="display:none;">
+    <div id="messages"></div>
+    <input id="messageInput" placeholder="Xabar yozing..." />
+    <button onclick="sendMessage()">Yuborish</button>
+  </div>
+
+  <script>
+    const socket = io();
+
+    function joinRoom() {
+      const username = document.getElementById('username').value.trim();
+      const room = document.getElementById('room').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if(!username || !room || !password) {
+        alert("Iltimos, barcha maydonlarni to‘ldiring!");
+        return;
+      }
+      socket.emit('join', {username, room, password});
+    }
+
+    socket.on('connect', () => {
+      console.log("Serverga ulandi");
+    });
+
+    socket.on('error', (data) => {
+      alert(data.msg);
+    });
+
+    socket.on('message', (msg) => {
+      const messagesDiv = document.getElementById('messages');
+      const p = document.createElement('p');
+      p.textContent = msg;
+      messagesDiv.appendChild(p);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+
+    socket.on('join', (msg) => {
+      const messagesDiv = document.getElementById('messages');
+      const p = document.createElement('p');
+      p.textContent = msg;
+      messagesDiv.appendChild(p);
+    });
+
+    socket.on('connect_error', () => {
+      alert("Serverga ulanishda xato yuz berdi");
+    });
+
+    socket.on('join', () => {
+      document.getElementById('chat').style.display = 'block';
+    });
+
+    function sendMessage() {
+      const msgInput = document.getElementById('messageInput');
+      const room = document.getElementById('room').value.trim();
+      const msg = msgInput.value.trim();
+      if(msg) {
+        socket.emit('message', {room, msg});
+        msgInput.value = '';
+      }
+    }
+  </script>
+</body>
+</html>
