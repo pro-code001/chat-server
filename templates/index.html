@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stylish Chat</title>
+  <title>Stylish Chat with Auth</title>
   <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <style>
@@ -20,28 +20,11 @@
       justify-content: center;
       align-items: center;
       position: relative;
+      background: #111;
+      color: #222;
     }
 
-    .background {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(-45deg, #ff0040, #00ffe0, #1900ff, #ff00c8);
-      background-size: 600% 600%;
-      animation: animateBG 20s ease infinite;
-      z-index: -1;
-      filter: blur(20px);
-    }
-
-    @keyframes animateBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    #login, #chat {
+    #auth, #chat {
       background: rgba(255, 255, 255, 0.95);
       padding: 25px;
       border-radius: 15px;
@@ -49,10 +32,6 @@
       width: 90%;
       max-width: 450px;
       text-align: center;
-    }
-
-    h2, h3 {
-      margin-bottom: 15px;
     }
 
     input {
@@ -160,16 +139,13 @@
   </style>
 </head>
 <body>
-  <div class="background"></div>
-
-  <div id="login">
-    <h2>Welcome to Chat</h2>
-    <input id="username" placeholder="Your name" />
-    <input id="room" placeholder="Room name" />
-    <input id="password" type="password" placeholder="Password" />
+  <div id="auth">
+    <h2>Welcome! Please Sign Up or Log In</h2>
+    <input id="authUsername" placeholder="Username" />
+    <input id="authPassword" type="password" placeholder="Password" />
     <div class="btn-group">
-      <button id="createBtn">Create</button>
-      <button id="joinBtn">Join</button>
+      <button id="signupBtn">Sign Up</button>
+      <button id="loginBtn">Log In</button>
     </div>
   </div>
 
@@ -184,69 +160,72 @@
 
   <script>
     const socket = io();
-    const loginDiv = document.getElementById('login');
+
+    const authDiv = document.getElementById('auth');
     const chatDiv = document.getElementById('chat');
-    const roomNameSpan = document.getElementById('roomName');
-    const messagesDiv = document.getElementById('messages');
 
-    document.getElementById('createBtn').onclick = () => {
-      const username = document.getElementById('username').value.trim();
-      const room = document.getElementById('room').value.trim();
-      const password = document.getElementById('password').value.trim();
-      if (!username || !room || !password) {
-        alert("Fill all fields to create a room.");
+    const signupBtn = document.getElementById('signupBtn');
+    const loginBtn = document.getElementById('loginBtn');
+
+    signupBtn.onclick = () => {
+      const username = document.getElementById('authUsername').value.trim();
+      const password = document.getElementById('authPassword').value.trim();
+
+      if (!username || !password) {
+        alert("Fill both username and password to sign up.");
         return;
       }
-      socket.emit('create', {username, room, password});
+
+      socket.emit('signup', {username, password});
     };
 
-    document.getElementById('joinBtn').onclick = () => {
-      const username = document.getElementById('username').value.trim();
-      const room = document.getElementById('room').value.trim();
-      const password = document.getElementById('password').value.trim();
-      if (!username || !room || !password) {
-        alert("Fill all fields to join a room.");
+    loginBtn.onclick = () => {
+      const username = document.getElementById('authUsername').value.trim();
+      const password = document.getElementById('authPassword').value.trim();
+
+      if (!username || !password) {
+        alert("Fill both username and password to log in.");
         return;
       }
-      socket.emit('join', {username, room, password});
+
+      socket.emit('login', {username, password});
     };
 
-    socket.on('created', data => {
-      loginDiv.style.display = 'none';
-      chatDiv.style.display = 'block';
-      roomNameSpan.textContent = data.room;
-      addMessage(`You created and joined room: ${data.room}`);
-    });
-
-    socket.on('joined', data => {
-      loginDiv.style.display = 'none';
-      chatDiv.style.display = 'block';
-      roomNameSpan.textContent = data.room;
-      addMessage(`You joined room: ${data.room}`);
-    });
-
-    socket.on('error', data => {
+    socket.on('signup_response', data => {
       alert(data.msg);
+      if (data.success) {
+        authDiv.style.display = 'none';
+        chatDiv.style.display = 'block';
+      }
     });
+
+    socket.on('login_response', data => {
+      alert(data.msg);
+      if (data.success) {
+        authDiv.style.display = 'none';
+        chatDiv.style.display = 'block';
+      }
+    });
+
+    // Chat message sending/receiving logic here
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    sendBtn.onclick = () => {
+      const msg = messageInput.value.trim();
+      if (!msg) return;
+      // For now, no rooms; just broadcast to all clients
+      socket.emit('message', {msg});
+      messageInput.value = '';
+    };
 
     socket.on('message', msg => {
-      addMessage(msg);
-    });
-
-    document.getElementById('sendBtn').onclick = () => {
-      const msg = document.getElementById('messageInput').value.trim();
-      const room = roomNameSpan.textContent;
-      if (!msg) return;
-      socket.emit('message', {room, msg});
-      document.getElementById('messageInput').value = '';
-    };
-
-    function addMessage(msg) {
       const p = document.createElement('p');
       p.textContent = msg;
       messagesDiv.appendChild(p);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
+    });
   </script>
 </body>
 </html>
