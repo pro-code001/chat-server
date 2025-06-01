@@ -79,10 +79,10 @@
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-    #auth, #roomForm, #chat {
+    #auth, #roomForm, #chat, #createRoomModal {
       display: none;
     }
-    #auth.active, #roomForm.active, #chat.active {
+    #auth.active, #roomForm.active, #chat.active, #createRoomModal.active {
       display: block;
     }
     #messages {
@@ -143,7 +143,15 @@
     <input id="roomIdInput" placeholder="Room ID" /> <!-- Room ID input -->
     <input id="roomPasswordInput" type="password" placeholder="Room Password" /> <!-- Room Password input -->
     <button id="joinRoomBtn" style="width: 100%; margin-top: 10px;">Join</button> <!-- Large Join button -->
-    <button id="createRoomBtn" style="width: 100%; margin-top: 10px;">Create Room</button> <!-- Smaller Create button -->
+    <button id="openCreateRoomBtn" style="width: 100%; margin-top: 10px;">Create Room</button> <!-- Smaller Create button -->
+  </div>
+
+  <!-- Create Room Modal -->
+  <div id="createRoomModal" class="container" style="display: none;">
+    <h2>Create a Room</h2>
+    <input id="createRoomPasswordInput" type="password" placeholder="Room Password" /> <!-- Password input -->
+    <button id="createRoomBtn" style="width: 100%; margin-top: 10px;">Create</button> <!-- Create button -->
+    <p id="roomIdDisplay" style="margin-top: 10px; font-weight: bold; color: #007BFF;"></p> <!-- Room ID display -->
   </div>
 
   <!-- CHAT -->
@@ -163,55 +171,4 @@
     // DOM elements
     const authDiv = document.getElementById('auth');
     const roomFormDiv = document.getElementById('roomForm');
-    const chatDiv = document.getElementById('chat');
-
-    const authEmailInput = document.getElementById('authEmail'); // Added Email input reference
-    const authUsernameInput = document.getElementById('authUsername');
-    const authPasswordInput = document.getElementById('authPassword');
-    const signupBtn = document.getElementById('signupBtn');
-    const loginBtn = document.getElementById('loginBtn');
-
-    const roomIdInput = document.getElementById('roomIdInput'); // Updated Room ID input reference
-    const roomPasswordInput = document.getElementById('roomPasswordInput');
-
-    signupBtn.onclick = async () => {
-      const email = authEmailInput.value.trim();
-      const username = authUsernameInput.value.trim();
-      const password = authPasswordInput.value.trim();
-      if (!email || !username || !password) {
-        alert("Fill all fields (Email, Username, Password) to sign up.");
-        return;
-      }
-
-      socket.emit('signup', { email, username, password });
-    };
-
-    loginBtn.onclick = () => {
-      const email = authEmailInput.value.trim();
-      const password = authPasswordInput.value.trim();
-      if (!email || !password) {
-        alert("Fill both email and password to log in.");
-        return;
-      }
-
-      socket.emit('login', { email, password });
-    };
-
-    socket.on('signup_response', data => {
-      alert(data.msg);
-      if (data.success) {
-        authDiv.classList.remove('active');
-        roomFormDiv.classList.add('active');
-      }
-    });
-
-    socket.on('login_response', data => {
-      alert(data.msg);
-      if (data.success) {
-        authDiv.classList.remove('active');
-        roomFormDiv.classList.add('active');
-      }
-    });
-  </script>
-</body>
-</html>
+    const createRoomModal = document.getElementById('createRoom
