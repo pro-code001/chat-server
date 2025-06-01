@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO, join_room, leave_room, send
 import re  # Import regular expressions for email validation
+import random  # Import random for generating room IDs
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -50,29 +51,32 @@ def handle_login(data):
 
 @socketio.on('create')
 def handle_create(data):
-    room = data['room']
     password = data['password']
-    username = data['username']
-    if room in rooms:
-        socketio.emit('error', {'msg': 'Room already exists.'})
-    else:
-        rooms[room] = {'password': password, 'users': [username]}
-        join_room(room)
-        socketio.emit('created', {'room': room})
+    roomId = str(random.randint(100000000000, 999999999999))  # Generate random ID
+
+    if roomId in rooms:
+        socketio.emit('error', {'msg': 'Room ID conflict. Please try again.'})
+        return
+
+    rooms[roomId] = {'password': password, 'users': []}
+    socketio.emit('created', {'roomId': roomId})
 
 @socketio.on('join')
 def handle_join(data):
-    room = data['room']
+    roomId = data['roomId']
     password = data['password']
     username = data['username']
-    if room not in rooms:
+
+    if roomId not in rooms:
         socketio.emit('error', {'msg': 'Room does not exist.'})
-    elif rooms[room]['password'] != password:
+        return
+    elif rooms[roomId]['password'] != password:
         socketio.emit('error', {'msg': 'Incorrect room password.'})
-    else:
-        rooms[room]['users'].append(username)
-        join_room(room)
-        socketio.emit('joined', {'room': room})
+        return
+
+    rooms[roomId]['users'].append(username)
+    join_room(roomId)
+    socketio.emit('joined', {'roomId': roomId})
 
 @socketio.on('message')
 def handle_message(data):
