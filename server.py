@@ -1,5 +1,6 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO, join_room, leave_room, send
+import re  # Import regular expressions for email validation
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -16,7 +17,13 @@ def handle_signup(data):
     email = data['email']
     username = data['username']
     password = data['password']
-    
+
+    # Validate email format
+    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    if not re.match(email_regex, email):
+        socketio.emit('signup_response', {'success': False, 'msg': 'Invalid email format.'})
+        return
+
     # Check if email or username is already taken
     if email in users:
         socketio.emit('signup_response', {'success': False, 'msg': 'Email is already registered.'})
@@ -24,20 +31,22 @@ def handle_signup(data):
     elif username in [user['username'] for user in users.values()]:
         socketio.emit('signup_response', {'success': False, 'msg': 'Username is already taken.'})
         return
-    
+
     # Add user to the dictionary
     users[email] = {'username': username, 'password': password}
     socketio.emit('signup_response', {'success': True, 'msg': 'Signup successful!'})
 
 @socketio.on('login')
 def handle_login(data):
-    username = data['username']
+    email = data['email']
     password = data['password']
-    user = next((user for user in users.values() if user['username'] == username and user['password'] == password), None)
-    if user:
+
+    # Check if user exists and password matches
+    user = users.get(email)
+    if user and user['password'] == password:
         socketio.emit('login_response', {'success': True, 'msg': 'Login successful!'})
     else:
-        socketio.emit('login_response', {'success': False, 'msg': 'Invalid username or password.'})
+        socketio.emit('login_response', {'success': False, 'msg': 'Invalid email or password.'})
 
 @socketio.on('create')
 def handle_create(data):
