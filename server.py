@@ -16,13 +16,18 @@ def handle_signup(data):
     email = data['email']
     username = data['username']
     password = data['password']
+    
+    # Check if email or username is already taken
     if email in users:
         socketio.emit('signup_response', {'success': False, 'msg': 'Email is already registered.'})
+        return
     elif username in [user['username'] for user in users.values()]:
         socketio.emit('signup_response', {'success': False, 'msg': 'Username is already taken.'})
-    else:
-        users[email] = {'username': username, 'password': password}
-        socketio.emit('signup_response', {'success': True, 'msg': 'Signup successful!'})
+        return
+    
+    # Add user to the dictionary
+    users[email] = {'username': username, 'password': password}
+    socketio.emit('signup_response', {'success': True, 'msg': 'Signup successful!'})
 
 @socketio.on('login')
 def handle_login(data):
