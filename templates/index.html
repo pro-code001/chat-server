@@ -171,4 +171,51 @@
     // DOM elements
     const authDiv = document.getElementById('auth');
     const roomFormDiv = document.getElementById('roomForm');
-    const createRoomModal = document.getElementById('createRoom
+    const createRoomModal = document.getElementById('createRoomModal');
+    const authEmailInput = document.getElementById('authEmail');
+    const authUsernameInput = document.getElementById('authUsername');
+    const authPasswordInput = document.getElementById('authPassword');
+    const signupBtn = document.getElementById('signupBtn');
+    const loginBtn = document.getElementById('loginBtn');
+
+    signupBtn.onclick = async () => {
+      const email = authEmailInput.value.trim();
+      const username = authUsernameInput.value.trim();
+      const password = authPasswordInput.value.trim();
+      if (!email || !username || !password) {
+        alert("Fill all fields (Email, Username, Password) to sign up.");
+        return;
+      }
+
+      socket.emit('signup', { email, username, password });
+    };
+
+    loginBtn.onclick = () => {
+      const email = authEmailInput.value.trim();
+      const password = authPasswordInput.value.trim();
+      if (!email || !password) {
+        alert("Fill both email and password to log in.");
+        return;
+      }
+
+      socket.emit('login', { email, password });
+    };
+
+    socket.on('signup_response', data => {
+      alert(data.msg);
+      if (data.success) {
+        authDiv.classList.remove('active');
+        roomFormDiv.classList.add('active');
+      }
+    });
+
+    socket.on('login_response', data => {
+      alert(data.msg);
+      if (data.success) {
+        authDiv.classList.remove('active');
+        roomFormDiv.classList.add('active');
+      }
+    });
+  </script>
+</body>
+</html>
