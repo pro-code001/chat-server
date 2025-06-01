@@ -19,6 +19,12 @@ def handle_signup(data):
     username = data['username']
     password = data['password']
 
+    # Validate email format
+    email_regex = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    if not re.match(email_regex, email):
+        socketio.emit('signup_response', {'success': False, 'msg': 'Invalid email format.'})
+        return
+
     if email in users:
         socketio.emit('signup_response', {'success': False, 'msg': 'Email is already registered.'})
         return
