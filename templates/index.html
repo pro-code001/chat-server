@@ -139,13 +139,11 @@
 
   <!-- ROOM FORM (CREATE / JOIN ROOM) -->
   <div id="roomForm" class="container">
-    <h2>Create or Join a Room</h2>
-    <input id="roomNameInput" placeholder="Room name" />
-    <input id="roomPasswordInput" type="password" placeholder="Room password" />
-    <div class="btn-group">
-      <button id="createRoomBtn">Create Room</button>
-      <button id="joinRoomBtn">Join Room</button>
-    </div>
+    <h2>Join a Room</h2>
+    <input id="roomIdInput" placeholder="Room ID" /> <!-- Room ID input -->
+    <input id="roomPasswordInput" type="password" placeholder="Room Password" /> <!-- Room Password input -->
+    <button id="joinRoomBtn" style="width: 100%; margin-top: 10px;">Join</button> <!-- Large Join button -->
+    <button id="createRoomBtn" style="width: 100%; margin-top: 10px;">Create Room</button> <!-- Smaller Create button -->
   </div>
 
   <!-- CHAT -->
@@ -173,129 +171,6 @@
     const signupBtn = document.getElementById('signupBtn');
     const loginBtn = document.getElementById('loginBtn');
 
-    const roomNameInput = document.getElementById('roomNameInput');
+    const roomIdInput = document.getElementById('roomIdInput'); // Updated Room ID input reference
     const roomPasswordInput = document.getElementById('roomPasswordInput');
-    const createRoomBtn = document.getElementById('createRoomBtn');
-    const joinRoomBtn = document.getElementById('joinRoomBtn');
-
-    const roomDisplayName = document.getElementById('roomDisplayName');
-    const messagesDiv = document.getElementById('messages');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-
-    let currentUsername = null;
-    let currentRoom = null;
-
-    // Sign Up
-    signupBtn.onclick = async () => {
-      const email = authEmailInput.value.trim();
-      const username = authUsernameInput.value.trim();
-      const password = authPasswordInput.value.trim();
-      if (!email || !username || !password) {
-        alert("Fill all fields (Email, Username, Password) to sign up.");
-        return;
-      }
-
-      // Emit signup event to the server
-      socket.emit('signup', { email, username, password });
-    };
-
-    // Listen for signup response from the server
-    socket.on('signup_response', data => {
-      alert(data.msg);
-      if (data.success) {
-        authDiv.classList.remove('active');
-        roomFormDiv.classList.add('active');
-      }
-    });
-
-    // Log In
-    loginBtn.onclick = () => {
-      const email = authEmailInput.value.trim();
-      const password = authPasswordInput.value.trim();
-      if (!email || !password) {
-        alert("Fill both email and password to log in.");
-        return;
-      }
-
-      // Emit login event to the server
-      socket.emit('login', { email, password });
-    };
-
-    // Listen for login response from the server
-    socket.on('login_response', data => {
-      alert(data.msg);
-      if (data.success) {
-        authDiv.classList.remove('active');
-        roomFormDiv.classList.add('active');
-      }
-    });
-
-    // Create Room
-    createRoomBtn.onclick = () => {
-      const room = roomNameInput.value.trim();
-      const password = roomPasswordInput.value.trim();
-      if (!room || !password) {
-        alert("Fill both room name and password to create a room.");
-        return;
-      }
-      socket.emit('create', {username: currentUsername, room, password});
-    };
-
-    // Join Room
-    joinRoomBtn.onclick = () => {
-      const room = roomNameInput.value.trim();
-      const password = roomPasswordInput.value.trim();
-      if (!room || !password) {
-        alert("Fill both room name and password to join a room.");
-        return;
-      }
-      socket.emit('join', {username: currentUsername, room, password});
-    };
-
-    // Listen to server's 'created' event (room created)
-    socket.on('created', data => {
-      alert("Room created and joined: " + data.room);
-      enterChatRoom(data.room);
-    });
-
-    // Listen to server's 'joined' event (room joined)
-    socket.on('joined', data => {
-      alert("Joined room: " + data.room);
-      enterChatRoom(data.room);
-    });
-
-    // Listen to error events (if any)
-    socket.on('error', data => {
-      alert(data.msg);
-    });
-
-    // Enter chat room UI update
-    function enterChatRoom(room) {
-      currentRoom = room;
-      roomFormDiv.classList.remove('active');
-      chatDiv.classList.add('active');
-      roomDisplayName.textContent = room;
-      messagesDiv.innerHTML = '';
-    }
-
-    // Sending messages
-    sendBtn.onclick = () => {
-      const msg = messageInput.value.trim();
-      if (!msg) return;
-      socket.emit('message', {username: currentUsername, room: currentRoom, msg});
-      messageInput.value = '';
-    };
-
-    // Receiving messages
-    socket.on('message', data => {
-      if (data.room === currentRoom) {
-        const p = document.createElement('p');
-        p.textContent = `${data.username}: ${data.msg}`;
-        messagesDiv.appendChild(p);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      }
-    });
-  </script>
-</body>
-</html>
+    const createRoomBtn = document.getElementById('createRoom
