@@ -157,6 +157,7 @@
   <!-- CHAT -->
   <div id="chat" class="container">
     <h3>Room: <span id="roomDisplayName"></span></h3>
+    <p id="roomIdLabel" style="font-weight: bold; color: #007BFF;"></p> <!-- Room ID label -->
     <div id="messages"></div>
     <div style="display: flex;">
       <input id="messageInput" placeholder="Type message..." />
@@ -166,56 +167,16 @@
 
   <script>
     const socket = io();
-    const users = []; // Array to store user data
-
-    // DOM elements
     const authDiv = document.getElementById('auth');
     const roomFormDiv = document.getElementById('roomForm');
     const createRoomModal = document.getElementById('createRoomModal');
+    const chatDiv = document.getElementById('chat');
     const authEmailInput = document.getElementById('authEmail');
     const authUsernameInput = document.getElementById('authUsername');
     const authPasswordInput = document.getElementById('authPassword');
     const signupBtn = document.getElementById('signupBtn');
     const loginBtn = document.getElementById('loginBtn');
-
-    signupBtn.onclick = async () => {
-      const email = authEmailInput.value.trim();
-      const username = authUsernameInput.value.trim();
-      const password = authPasswordInput.value.trim();
-      if (!email || !username || !password) {
-        alert("Fill all fields (Email, Username, Password) to sign up.");
-        return;
-      }
-
-      socket.emit('signup', { email, username, password });
-    };
-
-    loginBtn.onclick = () => {
-      const email = authEmailInput.value.trim();
-      const password = authPasswordInput.value.trim();
-      if (!email || !password) {
-        alert("Fill both email and password to log in.");
-        return;
-      }
-
-      socket.emit('login', { email, password });
-    };
-
-    socket.on('signup_response', data => {
-      alert(data.msg);
-      if (data.success) {
-        authDiv.classList.remove('active');
-        roomFormDiv.classList.add('active');
-      }
-    });
-
-    socket.on('login_response', data => {
-      alert(data.msg);
-      if (data.success) {
-        authDiv.classList.remove('active');
-        roomFormDiv.classList.add('active');
-      }
-    });
-  </script>
-</body>
-</html>
+    const roomIdInput = document.getElementById('roomIdInput');
+    const roomPasswordInput = document.getElementById('roomPasswordInput');
+    const createRoomPasswordInput = document.getElementById('createRoomPasswordInput');
+    const openCreateRoomBtn = document.getElementById('openCreate
