@@ -211,28 +211,25 @@
 
     // Log In
     loginBtn.onclick = () => {
-      const username = authUsernameInput.value.trim();
+      const email = authEmailInput.value.trim();
       const password = authPasswordInput.value.trim();
-      if (!username || !password) {
-        alert("Fill both username and password to log in.");
+      if (!email || !password) {
+        alert("Fill both email and password to log in.");
         return;
       }
 
-      // Check if user exists and password matches
-      const user = users.find(user => user.username === username && user.password === password);
-
-      if (!user) {
-        alert("Invalid username or password.");
-        return;
-      }
-
-      alert("Log in successful!");
-      authUsernameInput.value = '';
-      authPasswordInput.value = '';
-      currentUsername = username;
-      authDiv.classList.remove('active');
-      roomFormDiv.classList.add('active');
+      // Emit login event to the server
+      socket.emit('login', { email, password });
     };
+
+    // Listen for login response from the server
+    socket.on('login_response', data => {
+      alert(data.msg);
+      if (data.success) {
+        authDiv.classList.remove('active');
+        roomFormDiv.classList.add('active');
+      }
+    });
 
     // Create Room
     createRoomBtn.onclick = () => {
