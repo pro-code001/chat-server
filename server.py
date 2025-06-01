@@ -19,13 +19,6 @@ def handle_signup(data):
     username = data['username']
     password = data['password']
 
-    # Validate email format
-    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-    if not re.match(email_regex, email):
-        socketio.emit('signup_response', {'success': False, 'msg': 'Invalid email format.'})
-        return
-
-    # Check if email or username is already taken
     if email in users:
         socketio.emit('signup_response', {'success': False, 'msg': 'Email is already registered.'})
         return
@@ -33,7 +26,6 @@ def handle_signup(data):
         socketio.emit('signup_response', {'success': False, 'msg': 'Username is already taken.'})
         return
 
-    # Add user to the dictionary
     users[email] = {'username': username, 'password': password}
     socketio.emit('signup_response', {'success': True, 'msg': 'Signup successful!'})
 
@@ -42,7 +34,6 @@ def handle_login(data):
     email = data['email']
     password = data['password']
 
-    # Check if user exists and password matches
     user = users.get(email)
     if user and user['password'] == password:
         socketio.emit('login_response', {'success': True, 'msg': 'Login successful!'})
