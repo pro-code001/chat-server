@@ -68,5 +68,4 @@ def handle_message(data):
     send({'username': username, 'msg': msg, 'room': room}, room=room)
 
 if __name__ == '__main__':
-    if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000)
