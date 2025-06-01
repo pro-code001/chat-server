@@ -196,37 +196,18 @@
         return;
       }
 
-      // Temporarily skip email verification
-      const isEmailValid = true; // Assume all emails are valid
-
-      if (!isEmailValid) {
-        alert("The email address is invalid or does not exist. Please use a valid email.");
-        return;
-      }
-
-      // Check if email or username is already taken
-      const isEmailTaken = users.some(user => user.email === email);
-      const isUsernameTaken = users.some(user => user.username === username);
-
-      if (isEmailTaken) {
-        alert("Email is already registered. Please use another.");
-        return;
-      }
-
-      if (isUsernameTaken) {
-        alert("Username is already taken. Please choose another.");
-        return;
-      }
-
-      // Add user to the array
-      users.push({ email, username, password });
-      alert("Sign up successful!");
-      authEmailInput.value = '';
-      authUsernameInput.value = '';
-      authPasswordInput.value = '';
-      authDiv.classList.remove('active');
-      roomFormDiv.classList.add('active');
+      // Emit signup event to the server
+      socket.emit('signup', { email, username, password });
     };
+
+    // Listen for signup response from the server
+    socket.on('signup_response', data => {
+      alert(data.msg);
+      if (data.success) {
+        authDiv.classList.remove('active');
+        roomFormDiv.classList.add('active');
+      }
+    });
 
     // Log In
     loginBtn.onclick = () => {
@@ -252,26 +233,6 @@
       authDiv.classList.remove('active');
       roomFormDiv.classList.add('active');
     };
-
-    // On signup response
-    socket.on('signup_response', data => {
-      alert(data.msg);
-      if (data.success) {
-        currentUsername = authUsernameInput.value.trim();
-        authDiv.classList.remove('active');
-        roomFormDiv.classList.add('active');
-      }
-    });
-
-    // On login response
-    socket.on('login_response', data => {
-      alert(data.msg);
-      if (data.success) {
-        currentUsername = authUsernameInput.value.trim();
-        authDiv.classList.remove('active');
-        roomFormDiv.classList.add('active');
-      }
-    });
 
     // Create Room
     createRoomBtn.onclick = () => {
