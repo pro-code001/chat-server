@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_socketio import SocketIO, join_room, leave_room, send
 
 app = Flask(__name__)
@@ -9,7 +9,7 @@ rooms = {}  # Dictionary to store room data
 
 @app.route('/')
 def index():
-    return "Server is running!"
+    return render_template('index.html')  # Corrected file name
 
 @socketio.on('signup')
 def handle_signup(data):
