@@ -1,86 +1,128 @@
-from flask import Flask, render_template
-from flask_socketio import SocketIO, join_room, leave_room, send
-import re  # Import regular expressions for email validation
-import random  # Import random for generating room IDs
+import asyncio
+import websockets
+import json
+import os
+from aiohttp import web
+import hashlib
+import time
 
-app = Flask(__name__)
-socketio = SocketIO(app)
+# Foydalanuvchilar va xabarlar bazasi (JSON fayl)
+USERS_FILE = "users.json"
+MESSAGES_FILE = "messages.json"
 
-users = {}  # Dictionary to store user data
-rooms = {}  # Dictionary to store room data
+# Fayllarni boshlash
+if not os.path.exists(USERS_FILE):
+    with open(USERS_FILE, "w") as f:
+        json.dump({}, f)
+if not os.path.exists(MESSAGES_FILE):
+    with open(MESSAGES_FILE, "w") as f:
+        json.dump({}, f)
 
-@app.route('/')
-def index():
-    return render_template('index.html')  # Corrected file name
+# Foydalanuvchilarni o‘qish
+def load_users():
+    with open(USERS_FILE, "r") as f:
+        return json.load(f)
 
-@socketio.on('signup')
-def handle_signup(data):
-    email = data['email']
-    username = data['username']
-    password = data['password']
+# Xabarlarni o‘qish
+def load_messages():
+    with open(MESSAGES_FILE, "r") as f:
+        return json.load(f)
 
-    # Validate email format
-    email_regex = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
-    if not re.match(email_regex, email):
-        socketio.emit('signup_response', {'success': False, 'msg': 'Invalid email format.'})
-        return
+# Foydalanuvchilarni saqlash
+def save_users(users):
+    with open(USERS_FILE, "w") as f:
+        json.dump(users, f, indent=2)
 
-    if email in users:
-        socketio.emit('signup_response', {'success': False, 'msg': 'Email is already registered.'})
-        return
-    elif username in [user['username'] for user in users.values()]:
-        socketio.emit('signup_response', {'success': False, 'msg': 'Username is already taken.'})
-        return
+# Xabarlarni saqlash
+def save_messages(messages):
+    with open(MESSAGES_FILE, "w") as f:
+        json.dump(messages, f, indent=2)
 
-    users[email] = {'username': username, 'password': password}
-    socketio.emit('signup_response', {'success': True, 'msg': 'Signup successful!'})
+# Parolni hash qilish
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 
-@socketio.on('login')
-def handle_login(data):
-    email = data['email']
-    password = data['password']
+# WebSocket ulanishlari
+connected_users = {}
 
-    user = users.get(email)
-    if user and user['password'] == password:
-        socketio.emit('login_response', {'success': True, 'msg': 'Login successful!'})
-    else:
-        socketio.emit('login_response', {'success': False, 'msg': 'Invalid email or password.'})
+async def handle_connection(websocket, path):
+    # Foydalanuvchi identifikatorini olish
+    user = path.split("user=")[-1]
+    connected_users[user] = websocket
+    print(f"{user} ulandi")
 
-@socketio.on('create')
-def handle_create(data):
-    password = data['password']
-    roomId = str(random.randint(100000000000, 999999999999))  # Generate random ID
+    try:
+        async for message in websocket:
+            data = json.loads(message)
+            sender = data["sender"]
+            chat = data["chat"]
+            msg = data["message"]
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
 
-    if roomId in rooms:
-        socketio.emit('error', {'msg': 'Room ID conflict. Please try again.'})
-        return
+            # Xabarni saqlash
+            messages = load_messages()
+            chat_key = f"{sender}_{chat}"
+            if chat_key not in messages:
+                messages[chat_key] = []
+            messages[chat_key].append({"sender": sender, "message": msg, "timestamp": timestamp})
+            save_messages(messages)
 
-    rooms[roomId] = {'password': password, 'users': []}
-    socketio.emit('created', {'roomId': roomId})
+            # Xabarni chatdagi barcha ishtirokchilarga yuborish
+            for recipient in [sender, chat]:
+                if recipient in connected_users and connected_users[recipient].open:
+                    await connected_users[recipient].send(json.dumps({"sender": sender, "message": msg, "timestamp": timestamp}))
 
-@socketio.on('join')
-def handle_join(data):
-    roomId = data['roomId']
-    password = data['password']
-    username = data['username']
+    except websockets.exceptions.ConnectionClosed:
+        print(f"{user} ulanishi yopildi")
+        del connected_users[user]
 
-    if roomId not in rooms:
-        socketio.emit('error', {'msg': 'Room does not exist.'})
-        return
-    elif rooms[roomId]['password'] != password:
-        socketio.emit('error', {'msg': 'Incorrect room password.'})
-        return
+# HTTP API
+async def register(request):
+    data = await request.json()
+    username = data.get("username")
+    password = data.get("password")
+    users = load_users()
 
-    rooms[roomId]['users'].append(username)
-    join_room(roomId)
-    socketio.emit('joined', {'roomId': roomId})
+    if username in users:
+        return web.json_response({"success": False, "message": "Bu ism band!"})
+    
+    users[username] = hash_password(password)
+    save_users(users)
+    return web.json_response({"success": True})
 
-@socketio.on('message')
-def handle_message(data):
-    room = data['room']
-    username = data['username']
-    msg = data['msg']
-    send({'username': username, 'msg': msg, 'room': room}, room=room)
+async def login(request):
+    data = await request.json()
+    username = data.get("username")
+    password = data.get("password")
+    users = load_users()
 
-if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000)
+    if username in users and users[username] == hash_password(password):
+        return web.json_response({"success": True})
+    return web.json_response({"success": False, "message": "Noto‘g‘ri ism yoki parol!"})
+
+async def get_messages(request):
+    user = request.query.get("user")
+    chat = request.query.get("chat")
+    messages = load_messages()
+    chat_key = f"{user}_{chat}"
+    reverse_key = f"{chat}_{user}"
+    result = messages.get(chat_key, []) + messages.get(reverse_key, [])
+    return web.json_response({"messages": result})
+
+# HTTP server
+app = web.Application()
+app.add_routes([
+    web.post("/register", register),
+    web.post("/login", login),
+    web.get("/messages", get_messages)
+])
+
+# WebSocket server
+async def main():
+    server = await websockets.serve(handle_connection, "localhost", 8000)
+    print("WebSocket server 8000-portda ishga tushdi")
+    await web._run_app(app, port=8001)  # HTTP server 8001-portda
+    await server.wait_closed()
+
+if __name__ == "__main__":
+    asyncio.run(main())
