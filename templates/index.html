@@ -8,15 +8,16 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
+            padding: 0;
             display: flex;
             height: 100vh;
             background-color: #f0f0f0;
+            overflow: hidden; /* Ortib ketadigan qismlarni yashirish */
         }
         .container {
             display: flex;
-            width: 100%;
-            max-width: 800px;
-            margin: auto;
+            width: 100vw; /* To‘liq ekran kengligi */
+            height: 100vh; /* To‘liq ekran balandligi */
             background: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
@@ -24,6 +25,7 @@
             width: 30%;
             border-right: 1px solid #ddd;
             background: #f8f8f8;
+            overflow-y: auto; /* Chat ro‘yxati uzun bo‘lsa skroll qilish uchun */
         }
         .chat-list {
             list-style: none;
@@ -77,6 +79,7 @@
             display: flex;
             padding: 15px;
             border-top: 1px solid #ddd;
+            background: #fff;
         }
         .input-area input {
             flex: 1;
