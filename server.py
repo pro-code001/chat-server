@@ -76,6 +76,10 @@ async def handle_connection(websocket, path):
         print(f"{user} ulanishi yopildi")
         del connected_users[user]
 
+# Statik fayl xizmati
+async def serve_index(request):
+    return web.FileResponse("./index.html")
+
 # HTTP API
 async def register(request):
     data = await request.json()
@@ -112,6 +116,7 @@ async def get_messages(request):
 # HTTP server
 app = web.Application()
 app.add_routes([
+    web.get("/", serve_index),  # index.html ni xizmat qilish
     web.post("/register", register),
     web.post("/login", login),
     web.get("/messages", get_messages)
@@ -119,9 +124,9 @@ app.add_routes([
 
 # WebSocket server
 async def main():
-    server = await websockets.serve(handle_connection, "localhost", 8000)
+    server = await websockets.serve(handle_connection, "0.0.0.0", 8000)
     print("WebSocket server 8000-portda ishga tushdi")
-    await web._run_app(app, port=8001)  # HTTP server 8001-portda
+    await web._run_app(app, host="0.0.0.0", port=8001)  # HTTP server 8001-portda
     await server.wait_closed()
 
 if __name__ == "__main__":
