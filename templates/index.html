@@ -1,182 +1,174 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stylish Chat with Auth and Rooms</title>
-  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0; padding: 0;
-      min-height: 100vh;
-      display: flex; justify-content: center; align-items: center;
-      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23d5ab, #23a6d5);
-      background-size: 400% 400%;
-      animation: gradientBG 15s ease infinite;
-      color: #222;
-    }
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .container {
-      background: rgba(255,255,255,0.95);
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-      width: 90%; max-width: 450px;
-      text-align: center;
-    }
-    input {
-      width: 100%;
-      margin: 10px 0;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    .btn-group {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 10px;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    button {
-      flex: 1 1 45%;
-      padding: 12px;
-      font-size: 16px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      color: white;
-      background-color: #222;
-      position: relative;
-      z-index: 0;
-      overflow: hidden;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #000;
-    }
-    button::before {
-      content: "";
-      position: absolute;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background: linear-gradient(45deg, #ff0040, #00ffe0, #1900ff, #ff00c8);
-      background-size: 400% 400%;
-      animation: glowing 20s linear infinite;
-      z-index: -1;
-      filter: blur(6px);
-    }
-    @keyframes glowing {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    #auth, #roomForm, #chat, #createRoomModal {
-      display: none;
-    }
-    #auth.active, #roomForm.active, #chat.active, #createRoomModal.active {
-      display: block;
-    }
-    #messages {
-      height: 250px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 10px;
-      background: #f7f7f7;
-      text-align: left;
-    }
-    #messageInput {
-      width: calc(100% - 60px);
-      font-size: 15px;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-    }
-    #sendBtn {
-      width: 50px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 18px;
-      margin-left: 5px;
-    }
-    #sendBtn:hover {
-      background-color: #1f7d34;
-    }
-    @media (max-width: 480px) {
-      input, button, #messageInput, #sendBtn {
-        font-size: 15px;
-      }
-      #messages {
-        height: 200px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Telegram</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .sidebar {
+            width: 30%;
+            border-right: 1px solid #ddd;
+            background: #f8f8f8;
+        }
+        .chat-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .chat-item {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .chat-item:hover {
+            background: #e0e0e0;
+        }
+        .chat-item.active {
+            background: #d1e7ff;
+        }
+        .chat-area {
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            padding: 15px;
+            background: #0088cc;
+            color: white;
+            font-weight: bold;
+        }
+        .messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: #fff;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+        .message.sent {
+            background: #0088cc;
+            color: white;
+            margin-left: auto;
+        }
+        .message.received {
+            background: #e5e5ea;
+            color: black;
+        }
+        .input-area {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+        .input-area button {
+            padding: 10px 20px;
+            background: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .input-area button:hover {
+            background: #0077b3;
+        }
+    </style>
 </head>
 <body>
-  <!-- AUTH (SIGNUP / LOGIN) -->
-  <div id="auth" class="container active">
-    <h2>Welcome! Please Sign Up or Log In</h2>
-    <input id="authEmail" type="email" placeholder="Email" /> <!-- Added Email input -->
-    <input id="authUsername" placeholder="Username" />
-    <input id="authPassword" type="password" placeholder="Password" />
-    <div class="btn-group">
-      <button id="signupBtn">Sign Up</button>
-      <button id="loginBtn">Log In</button>
+    <div class="container">
+        <div class="sidebar">
+            <ul class="chat-list">
+                <li class="chat-item active" onclick="selectChat('Sardor')">Sardor</li>
+                <li class="chat-item" onclick="selectChat('Nodira')">Nodira</li>
+                <li class="chat-item" onclick="selectChat('Ali')">Ali</li>
+            </ul>
+        </div>
+        <div class="chat-area">
+            <div class="chat-header" id="chat-header">Sardor</div>
+            <div class="messages" id="messages">
+                <div class="message received">Salom! Qandaysan?</div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="message-input" placeholder="Xabar yozing...">
+                <button onclick="sendMessage()">Yuborish</button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- ROOM FORM (CREATE / JOIN ROOM) -->
-  <div id="roomForm" class="container">
-    <h2>Join a Room</h2>
-    <input id="roomIdInput" placeholder="Room ID" /> <!-- Room ID input -->
-    <input id="roomPasswordInput" type="password" placeholder="Room Password" /> <!-- Room Password input -->
-    <button id="joinRoomBtn" style="width: 100%; margin-top: 10px;">Join</button> <!-- Large Join button -->
-    <button id="openCreateRoomBtn" style="width: 100%; margin-top: 10px;">Create Room</button> <!-- Smaller Create button -->
-  </div>
+    <script>
+        let ws = new WebSocket("ws://localhost:8000/ws");
+        let currentChat = "Sardor";
 
-  <!-- Create Room Modal -->
-  <div id="createRoomModal" class="container" style="display: none;">
-    <h2>Create a Room</h2>
-    <input id="createRoomPasswordInput" type="password" placeholder="Room Password" /> <!-- Password input -->
-    <button id="createRoomBtn" style="width: 100%; margin-top: 10px;">Create</button> <!-- Create button -->
-    <p id="roomIdDisplay" style="margin-top: 10px; font-weight: bold; color: #007BFF;"></p> <!-- Room ID display -->
-  </div>
+        ws.onopen = function() {
+            console.log("WebSocket ulandi");
+        };
 
-  <!-- CHAT -->
-  <div id="chat" class="container">
-    <h3>Room: <span id="roomDisplayName"></span></h3>
-    <p id="roomIdLabel" style="font-weight: bold; color: #007BFF;"></p> <!-- Room ID label -->
-    <div id="messages"></div>
-    <div style="display: flex;">
-      <input id="messageInput" placeholder="Type message..." />
-      <button id="sendBtn">➤</button>
-    </div>
-  </div>
+        ws.onmessage = function(event) {
+            const messages = document.getElementById("messages");
+            const message = document.createElement("div");
+            message.className = "message received";
+            message.innerText = event.data;
+            messages.appendChild(message);
+            messages.scrollTop = messages.scrollHeight;
+        };
 
-  <script>
-    const socket = io();
-    const authDiv = document.getElementById('auth');
-    const roomFormDiv = document.getElementById('roomForm');
-    const createRoomModal = document.getElementById('createRoomModal');
-    const chatDiv = document.getElementById('chat');
-    const authEmailInput = document.getElementById('authEmail');
-    const authUsernameInput = document.getElementById('authUsername');
-    const authPasswordInput = document.getElementById('authPassword');
-    const signupBtn = document.getElementById('signupBtn');
-    const loginBtn = document.getElementById('loginBtn');
-    const roomIdInput = document.getElementById('roomIdInput');
-    const roomPasswordInput = document.getElementById('roomPasswordInput');
-    const createRoomPasswordInput = document.getElementById('createRoomPasswordInput');
-    const openCreateRoomBtn = document.getElementById('openCreate
+        function selectChat(name) {
+            currentChat = name;
+            document.getElementById("chat-header").innerText = name;
+            document.querySelectorAll(".chat-item").forEach(item => {
+                item.classList.remove("active");
+                if (item.innerText === name) {
+                    item.classList.add("active");
+                }
+            });
+            // Chat tarixini yangilash mumkin
+            document.getElementById("messages").innerHTML = `<div class="message received">Salom! Qandaysan?</div>`;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById("message-input");
+            const message = input.value.trim();
+            if (message) {
+                const messages = document.getElementById("messages");
+                const newMessage = document.createElement("div");
+                newMessage.className = "message sent";
+                newMessage.innerText = message;
+                messages.appendChild(newMessage);
+                ws.send(`${currentChat}: ${message}`);
+                input.value = "";
+                messages.scrollTop = messages.scrollHeight;
+            }
+        }
+
+        document.getElementById("message-input").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
