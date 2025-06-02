@@ -178,9 +178,10 @@
         let ws;
         let currentChat = "Sardor";
         let currentUser = null;
+        const BASE_URL = "https://YOUR_RENDER_URL.onrender.com"; // Render.com URL’ini shu yerga qo‘ying
 
         function connectWebSocket() {
-            ws = new WebSocket("ws://localhost:8000/ws?user=" + encodeURIComponent(currentUser));
+            ws = new WebSocket(`wss://${BASE_URL.split("https://")[1]}/ws?user=${encodeURIComponent(currentUser)}`);
             ws.onopen = function() {
                 console.log("WebSocket ulandi");
             };
@@ -189,7 +190,7 @@
                 const data = JSON.parse(event.data);
                 const message = document.createElement("div");
                 message.className = data.sender === currentUser ? "message sent" : "message received";
-                message.innerText = `${data.sender}: ${data.message}`;
+                message.innerText = `${data.sender}: ${data.message} (${data.timestamp})`;
                 messages.appendChild(message);
                 messages.scrollTop = messages.scrollHeight;
             };
@@ -202,7 +203,7 @@
             const username = document.getElementById("username").value.trim();
             const password = document.getElementById("password").value.trim();
             if (username && password) {
-                fetch("http://localhost:8000/register", {
+                fetch(`${BASE_URL}/register`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password })
@@ -226,7 +227,7 @@
             const username = document.getElementById("username").value.trim();
             const password = document.getElementById("password").value.trim();
             if (username && password) {
-                fetch("http://localhost:8000/login", {
+                fetch(`${BASE_URL}/login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password })
@@ -257,8 +258,7 @@
                     item.classList.add("active");
                 }
             });
-            // Chat tarixini serverdan olish
-            fetch(`http://localhost:8000/messages?user=${encodeURIComponent(currentUser)}&chat=${encodeURIComponent(name)}`)
+            fetch(`${BASE_URL}/messages?user=${encodeURIComponent(currentUser)}&chat=${encodeURIComponent(name)}`)
                 .then(response => response.json())
                 .then(data => {
                     const messages = document.getElementById("messages");
@@ -266,7 +266,7 @@
                     data.messages.forEach(msg => {
                         const message = document.createElement("div");
                         message.className = msg.sender === currentUser ? "message sent" : "message received";
-                        message.innerText = `${msg.sender}: ${msg.message}`;
+                        message.innerText = `${msg.sender}: ${msg.message} (${msg.timestamp})`;
                         messages.appendChild(message);
                     });
                     messages.scrollTop = messages.scrollHeight;
