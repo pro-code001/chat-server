@@ -1,102 +1,71 @@
-import asyncio
-import websockets
-import json
-import os
-from aiohttp import web
-import hashlib
-import time
-from modules.auth import register_user, login_user
-from modules.messages import save_message, get_messages
-from modules.files import handle_file_upload
-from modules.groups import create_group, add_user_to_group
+from flask import Flask, render_template
+from flask_socketio import SocketIO, join_room, leave_room, send
 
-# Statik fayllar papkasi
-STATIC_DIR = "static"
+app = Flask(__name__)
+socketio = SocketIO(app)
 
-async def serve_static(request):
-    path = request.path[1:] if request.path.startswith("/") else request.path
-    if not path:
-        path = "index.html"
-    file_path = os.path.join(STATIC_DIR, path)
-    if os.path.exists(file_path):
-        return web.FileResponse(file_path)
-    return web.Response(status=404, text="Fayl topilmadi")
+users = {}  # Dictionary to store user data
+rooms = {}  # Dictionary to store room data
 
-# WebSocket ulanishlari
-connected_users = {}
+@app.route('/')
+def index():
+    return render_template('index.html')  # Corrected file name
 
-async def handle_connection(websocket, path):
-    user = path.split("user=")[-1]
-    connected_users[user] = websocket
-    print(f"{user} ulandi")
+@socketio.on('signup')
+def handle_signup(data):
+    email = data['email']
+    username = data['username']
+    password = data['password']
+    if email in users:
+        socketio.emit('signup_response', {'success': False, 'msg': 'Email is already registered.'})
+    elif username in [user['username'] for user in users.values()]:
+        socketio.emit('signup_response', {'success': False, 'msg': 'Username is already taken.'})
+    else:
+        users[email] = {'username': username, 'password': password}
+        socketio.emit('signup_response', {'success': True, 'msg': 'Signup successful!'})
 
-    # Onlayn statusni yangilash
-    await broadcast_status(user, "online")
+@socketio.on('login')
+def handle_login(data):
+    username = data['username']
+    password = data['password']
+    user = next((user for user in users.values() if user['username'] == username and user['password'] == password), None)
+    if user:
+        socketio.emit('login_response', {'success': True, 'msg': 'Login successful!'})
+    else:
+        socketio.emit('login_response', {'success': False, 'msg': 'Invalid username or password.'})
 
-    try:
-        async for message in websocket:
-            data = json.loads(message)
-            sender = data["sender"]
-            chat = data["chat"]
-            msg = data.get("message")
-            file = data.get("file")
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+@socketio.on('create')
+def handle_create(data):
+    room = data['room']
+    password = data['password']
+    username = data['username']
+    if room in rooms:
+        socketio.emit('error', {'msg': 'Room already exists.'})
+    else:
+        rooms[room] = {'password': password, 'users': [username]}
+        join_room(room)
+        socketio.emit('created', {'room': room})
 
-            if msg:
-                # Xabarni saqlash
-                save_message(sender, chat, msg, timestamp)
-                # Xabarni yuborish
-                for recipient in [sender, chat]:
-                    if recipient in connected_users and connected_users[recipient].open:
-                        await connected_users[recipient].send(json.dumps({
-                            "sender": sender,
-                            "message": msg,
-                            "timestamp": timestamp,
-                            "type": "text"
-                        }))
-            elif file:
-                # Faylni saqlash
-                file_url = handle_file_upload(file, sender)
-                for recipient in [sender, chat]:
-                    if recipient in connected_users and connected_users[recipient].open:
-                        await connected_users[recipient].send(json.dumps({
-                            "sender": sender,
-                            "file_url": file_url,
-                            "timestamp": timestamp,
-                            "type": "file"
-                        }))
+@socketio.on('join')
+def handle_join(data):
+    room = data['room']
+    password = data['password']
+    username = data['username']
+    if room not in rooms:
+        socketio.emit('error', {'msg': 'Room does not exist.'})
+    elif rooms[room]['password'] != password:
+        socketio.emit('error', {'msg': 'Incorrect room password.'})
+    else:
+        rooms[room]['users'].append(username)
+        join_room(room)
+        socketio.emit('joined', {'room': room})
 
-    except websockets.exceptions.ConnectionClosed:
-        print(f"{user} ulanishi yopildi")
-        del connected_users[user]
-        await broadcast_status(user, "offline")
+@socketio.on('message')
+def handle_message(data):
+    room = data['room']
+    username = data['username']
+    msg = data['msg']
+    send({'username': username, 'msg': msg, 'room': room}, room=room)
 
-async def broadcast_status(user, status):
-    for recipient in connected_users:
-        if connected_users[recipient].open:
-            await connected_users[recipient].send(json.dumps({
-                "type": "status",
-                "user": user,
-                "status": status
-            }))
-
-# HTTP API
-app = web.Application()
-app.add_routes([
-    web.get("/{path:.*}", serve_static),  # Statik fayllarni xizmat qilish
-    web.post("/register", register_user),
-    web.post("/login", login_user),
-    web.get("/messages", get_messages),
-    web.post("/upload", handle_file_upload),
-    web.post("/create_group", create_group)
-])
-
-# WebSocket server
-async def main():
-    server = await websockets.serve(handle_connection, "0.0.0.0", 8000)
-    print("WebSocket server 8000-portda ishga tushdi")
-    await web._run_app(app, host="0.0.0.0", port=8001)
-    await server.wait_closed()
-
-if __name__ == "__main__":
-    asyncio.run(main())
+if __name__ == '__main__':
+    socketio.run(app, host='0.0.0.0', port=5000)
