@@ -12,12 +12,12 @@
             display: flex;
             height: 100vh;
             background-color: #f0f0f0;
-            overflow: hidden; /* Ortib ketadigan qismlarni yashirish */
+            overflow: hidden;
         }
         .container {
             display: flex;
-            width: 100vw; /* To‘liq ekran kengligi */
-            height: 100vh; /* To‘liq ekran balandligi */
+            width: 100vw;
+            height: 100vh;
             background: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
@@ -25,7 +25,7 @@
             width: 30%;
             border-right: 1px solid #ddd;
             background: #f8f8f8;
-            overflow-y: auto; /* Chat ro‘yxati uzun bo‘lsa skroll qilish uchun */
+            overflow-y: auto;
         }
         .chat-list {
             list-style: none;
@@ -65,9 +65,9 @@
             padding: 10px;
             border-radius: 10px;
             max-width: 70%;
-            overflow-wrap: break-word; /* Uzun so‘zlar qatorga bo‘linadi */
-            white-space: normal; /* Matn avtomatik qatorga o‘tadi */
-            word-break: break-all; /* Agar so‘z juda uzun bo‘lsa, bo‘linadi */
+            overflow-wrap: break-word;
+            white-space: normal;
+            word-break: break-all;
         }
         .message.sent {
             background: #0088cc;
@@ -102,10 +102,59 @@
         .input-area button:hover {
             background: #0077b3;
         }
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .login-box input {
+            display: block;
+            width: 200px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .login-box button {
+            padding: 10px 20px;
+            background: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .login-box button:hover {
+            background: #0077b3;
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="login-container" id="login-container">
+        <div class="login-box">
+            <h2>Telegramga xush kelibsiz</h2>
+            <input type="text" id="username" placeholder="Ism">
+            <input type="password" id="password" placeholder="Parol">
+            <button onclick="register()">Ro‘yxatdan o‘tish</button>
+            <button onclick="login()">Kirish</button>
+        </div>
+    </div>
+    <div class="container hidden" id="chat-container">
         <div class="sidebar">
             <ul class="chat-list">
                 <li class="chat-item active" onclick="selectChat('Sardor')">Sardor</li>
@@ -126,21 +175,78 @@
     </div>
 
     <script>
-        let ws = new WebSocket("ws://localhost:8000/ws");
+        let ws;
         let currentChat = "Sardor";
+        let currentUser = null;
 
-        ws.onopen = function() {
-            console.log("WebSocket ulandi");
-        };
+        function connectWebSocket() {
+            ws = new WebSocket("ws://localhost:8000/ws?user=" + encodeURIComponent(currentUser));
+            ws.onopen = function() {
+                console.log("WebSocket ulandi");
+            };
+            ws.onmessage = function(event) {
+                const messages = document.getElementById("messages");
+                const data = JSON.parse(event.data);
+                const message = document.createElement("div");
+                message.className = data.sender === currentUser ? "message sent" : "message received";
+                message.innerText = `${data.sender}: ${data.message}`;
+                messages.appendChild(message);
+                messages.scrollTop = messages.scrollHeight;
+            };
+            ws.onerror = function() {
+                alert("WebSocket ulanishida xato!");
+            };
+        }
 
-        ws.onmessage = function(event) {
-            const messages = document.getElementById("messages");
-            const message = document.createElement("div");
-            message.className = "message received";
-            message.innerText = event.data;
-            messages.appendChild(message);
-            messages.scrollTop = messages.scrollHeight;
-        };
+        function register() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            if (username && password) {
+                fetch("http://localhost:8000/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Ro‘yxatdan o‘tish muvaffaqiyatli!");
+                        login();
+                    } else {
+                        alert("Xato: " + data.message);
+                    }
+                })
+                .catch(error => alert("Xato: " + error));
+            } else {
+                alert("Ism va parolni kiriting!");
+            }
+        }
+
+        function login() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            if (username && password) {
+                fetch("http://localhost:8000/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentUser = username;
+                        document.getElementById("login-container").classList.add("hidden");
+                        document.getElementById("chat-container").classList.remove("hidden");
+                        connectWebSocket();
+                    } else {
+                        alert("Xato: " + data.message);
+                    }
+                })
+                .catch(error => alert("Xato: " + error));
+            } else {
+                alert("Ism va parolni kiriting!");
+            }
+        }
 
         function selectChat(name) {
             currentChat = name;
@@ -151,20 +257,32 @@
                     item.classList.add("active");
                 }
             });
-            // Chat tarixini yangilash mumkin
-            document.getElementById("messages").innerHTML = `<div class="message received">Salom! Qandaysan?</div>`;
+            // Chat tarixini serverdan olish
+            fetch(`http://localhost:8000/messages?user=${encodeURIComponent(currentUser)}&chat=${encodeURIComponent(name)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const messages = document.getElementById("messages");
+                    messages.innerHTML = "";
+                    data.messages.forEach(msg => {
+                        const message = document.createElement("div");
+                        message.className = msg.sender === currentUser ? "message sent" : "message received";
+                        message.innerText = `${msg.sender}: ${msg.message}`;
+                        messages.appendChild(message);
+                    });
+                    messages.scrollTop = messages.scrollHeight;
+                });
         }
 
         function sendMessage() {
             const input = document.getElementById("message-input");
             const message = input.value.trim();
-            if (message) {
+            if (message && ws && ws.readyState === WebSocket.OPEN) {
                 const messages = document.getElementById("messages");
                 const newMessage = document.createElement("div");
                 newMessage.className = "message sent";
-                newMessage.innerText = message;
+                newMessage.innerText = `${currentUser}: ${message}`;
                 messages.appendChild(newMessage);
-                ws.send(`${currentChat}: ${message}`);
+                ws.send(JSON.stringify({ sender: currentUser, chat: currentChat, message }));
                 input.value = "";
                 messages.scrollTop = messages.scrollHeight;
             }
