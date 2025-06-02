@@ -1,5 +1,2 @@
-Flask==2.2.2
-Flask-SocketIO==5.3.3
-Werkzeug==2.2.2
-eventlet==0.33.0
-dnspython==2.2.1
+websockets==10.4
+aiohttp==3.8.6
