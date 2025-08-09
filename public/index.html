@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Telegram</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="join-screen">
+    <h2>Mini Telegram</h2>
+    <input type="text" id="name" placeholder="Ismingiz">
+    <input type="text" id="room" placeholder="Xona nomi">
+    <input type="password" id="password" placeholder="Parol">
+    <button id="joinBtn">Xonaga kirish</button>
+    <p id="error"></p>
+  </div>
+
+  <div class="chat-screen hidden">
+    <div class="messages" id="messages"></div>
+    <div class="input-box">
+      <input type="text" id="msgInput" placeholder="Xabar yozing...">
+      <button id="sendBtn">Yuborish</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
