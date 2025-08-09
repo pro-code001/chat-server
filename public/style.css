@@ -1,0 +1,39 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #e5ddd5;
+  margin: 0;
+}
+
+.hidden { display: none; }
+
+.join-screen, .chat-screen {
+  max-width: 400px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 50px;
+}
+
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+}
+
+.messages {
+  height: 400px;
+  overflow-y: auto;
+  background: #fff;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.message {
+  padding: 5px;
+  margin: 5px 0;
+  border-radius: 5px;
+}
+
+.mine { background: #dcf8c6; text-align: right; }
+.theirs { background: #fff; text-align: left; }
