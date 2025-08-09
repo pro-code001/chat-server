@@ -7,17 +7,21 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// Statik fayllarni (client HTML/JS/CSS) xizmat qilish
+// public papkadan statik fayllarni xizmat qilish
 app.use(express.static(path.join(__dirname, "public")));
 
-// WebSocket ulanish
+// Agar biror URLga kirsang, index.html ni yuboradi
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 wss.on("connection", (ws) => {
   console.log("Yangi foydalanuvchi ulandi");
 
   ws.on("message", (message) => {
     console.log("Xabar:", message.toString());
 
-    // Barcha ulanganlarga yuborish
+    // Barcha mijozlarga xabar yuborish
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(message.toString());
@@ -30,7 +34,7 @@ wss.on("connection", (ws) => {
   });
 });
 
-// Render yoki lokal port
+// Render uchun PORT muhit o‘zgaruvchisini ishlatish
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`${PORT}-portda ishga tushdi`);
